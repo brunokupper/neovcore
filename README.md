@@ -143,3 +143,8 @@ Distribuído sob a licença MIT.
 
 ✨ Autor
 Desenvolvido por Bruno Kupper
+
+![Version](https://img.shields.io/badge/NeoVcore-6.0.0-blue)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
+![Windows](https://img.shields.io/badge/Windows-11-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-green)
