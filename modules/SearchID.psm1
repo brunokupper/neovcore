@@ -3,19 +3,38 @@
     MODULO: SearchID.psm1
     FUNCAO: Buscar feature por ID e gerenciar estado
     AUTOR: Bruno Kupper (@brunokupper)
-    VERSAO: 6.0
+    VERSAO: 6.1
     ============================================================
 #>
 
+# ------------------------------------------------------------
+# Obter estado de uma feature via Vivetool
+# ------------------------------------------------------------
 function Get-FeatureStateById {
 
     param([int]$Id)
 
-    $output = vivetool /query 2>$null
+    if ($Id -le 0) {
+        Write-Log "ID inválido consultado: $Id"
+        return "Inválido"
+    }
+
+    try {
+        $output = vivetool /query /id:$Id 2>$null
+    }
+    catch {
+        Write-Log "Erro ao executar vivetool /query para ID $Id"
+        return "Erro"
+    }
+
     foreach ($line in $output) {
+
+        # Formato novo
         if ($line -match "Feature\s+ID:\s+$Id\s+State:\s+(\w+)") {
             return $Matches[1]
         }
+
+        # Formato antigo
         elseif ($line -match "ID\s+$Id\s+(\w+)") {
             return $Matches[1]
         }
@@ -24,6 +43,9 @@ function Get-FeatureStateById {
     return "Desconhecido"
 }
 
+# ------------------------------------------------------------
+# Menu de busca por ID
+# ------------------------------------------------------------
 function Show-SearchByIdMenu {
 
     while ($true) {
@@ -77,21 +99,37 @@ function Show-SearchByIdMenu {
         $choice = Read-Host "Escolha"
 
         switch ($choice) {
+
             "1" {
-                vivetool /enable /id:$id
-                Write-Host ""
-                Write-Host "Recurso ATIVADO." -ForegroundColor Green
+                try {
+                    vivetool /enable /id:$id 2>$null
+                    Write-Log "Feature $id ativada via SearchID"
+                    Write-Host ""
+                    Write-Host "Recurso ATIVADO." -ForegroundColor Green
+                }
+                catch {
+                    Write-Host "Erro ao ativar recurso." -ForegroundColor Red
+                    Write-Log "Erro ao ativar feature $id via SearchID"
+                }
                 Read-Host "ENTER para continuar"
             }
+
             "2" {
-                vivetool /disable /id:$id
-                Write-Host ""
-                Write-Host "Recurso DESATIVADO." -ForegroundColor Yellow
+                try {
+                    vivetool /disable /id:$id 2>$null
+                    Write-Log "Feature $id desativada via SearchID"
+                    Write-Host ""
+                    Write-Host "Recurso DESATIVADO." -ForegroundColor Yellow
+                }
+                catch {
+                    Write-Host "Erro ao desativar recurso." -ForegroundColor Red
+                    Write-Log "Erro ao desativar feature $id via SearchID"
+                }
                 Read-Host "ENTER para continuar"
             }
-            "3" {
-                return
-            }
+
+            "3" { return }
+
             default {
                 Write-Host "Opcao invalida." -ForegroundColor Red
                 Read-Host "ENTER para continuar"
