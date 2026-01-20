@@ -1,0 +1,10 @@
+﻿2026-01-12 04:22:19 - Falha no rollback: backup inexistente
+2026-01-12 04:22:22 - Falha ao baixar versao remota do NeoVcore
+2026-01-12 04:23:54 - Falha ao baixar versao remota do NeoVcore
+2026-01-12 04:23:58 - Falha no rollback: backup inexistente
+2026-01-12 04:24:00 - Falha no rollback: backup inexistente
+2026-01-12 04:24:02 - Falha no rollback: backup inexistente
+2026-01-12 04:39:07 - Falha ao baixar versao remota do NeoVcore
+2026-01-14 03:02:54 - Falha ao baixar versao remota do NeoVcore
+2026-01-20 01:07:13 - Falha ao baixar versao remota do NeoVcore
+2026-01-20 01:20:30 - Falha ao baixar versao remota do NeoVcore
