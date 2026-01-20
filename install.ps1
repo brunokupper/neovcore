@@ -1,10 +1,15 @@
-# Neo Vcore V6 - Instalador Online
+# Neo Vcore V6 - Instalador Inteligente
 # Autor: Bruno Kupper
 
-Write-Host "Instalando Neo Vcore V6..." -ForegroundColor Cyan
+Write-Host "Verificando instalação do NeoVcore..." -ForegroundColor Cyan
 
 $installPath = "$env:SystemDrive\NeoVcore"
 $repo = "https://raw.githubusercontent.com/brunokupper/neovcore/main"
+
+# Função para baixar arquivos
+function Download-File($url, $dest) {
+    Invoke-WebRequest $url -OutFile $dest -UseBasicParsing
+}
 
 # Criar diretórios
 New-Item -ItemType Directory -Path $installPath -Force | Out-Null
@@ -12,15 +17,53 @@ New-Item -ItemType Directory -Path "$installPath\data" -Force | Out-Null
 New-Item -ItemType Directory -Path "$installPath\modules" -Force | Out-Null
 New-Item -ItemType Directory -Path "$installPath\vivetool" -Force | Out-Null
 
+# Verificar versão local
+$localVersionFile = "$installPath\data\version.txt"
+$remoteVersionUrl = "$repo/data/version.txt"
+
+$localVersion = ""
+$remoteVersion = ""
+
+if (Test-Path $localVersionFile) {
+    $localVersion = Get-Content $localVersionFile
+}
+
+try {
+    $remoteVersion = (Invoke-WebRequest $remoteVersionUrl -UseBasicParsing).Content
+} catch {
+    Write-Host "Não foi possível verificar a versão online." -ForegroundColor Yellow
+}
+
+# Se versões forem iguais → não baixa nada
+if ($localVersion -eq $remoteVersion -and $localVersion -ne "") {
+    Write-Host "NeoVcore já está atualizado (versão $localVersion)." -ForegroundColor Green
+    Write-Host "Abrindo NeoVcore..." -ForegroundColor Cyan
+
+    # Registrar comando NeoVcore automaticamente
+    $profilePath = $PROFILE
+    if (-not (Test-Path $profilePath)) {
+        New-Item -ItemType File -Path $profilePath -Force | Out-Null
+    }
+
+    $aliasLine = 'Set-Alias NeoVcore "C:\NeoVcore\NeoVcore.ps1"'
+    if (-not (Select-String -Path $profilePath -Pattern "NeoVcore.ps1" -Quiet)) {
+        Add-Content -Path $profilePath -Value $aliasLine
+    }
+
+    & "$installPath\NeoVcore.ps1"
+    exit
+}
+
+Write-Host "Instalando/Atualizando NeoVcore..." -ForegroundColor Cyan
+
 # Arquivo principal
-Invoke-WebRequest "$repo/NeoVcore.ps1" -OutFile "$installPath\NeoVcore.ps1"
+Download-File "$repo/NeoVcore.ps1" "$installPath\NeoVcore.ps1"
 
 # Dados
-Invoke-WebRequest "$repo/data/features.json" -OutFile "$installPath\data\features.json"
-Invoke-WebRequest "$repo/data/logs.txt" -OutFile "$installPath\data\logs.txt"
-Invoke-WebRequest "$repo/data/presets.json" -OutFile "$installPath\data\presets.json"
-Invoke-WebRequest "$repo/data/Settings.json" -OutFile "$installPath\data\Settings.json"
-Invoke-WebRequest "$repo/data/version.txt" -OutFile "$installPath\data\version.txt"
+$files = @("features.json","logs.txt","presets.json","Settings.json","version.txt")
+foreach ($f in $files) {
+    Download-File "$repo/data/$f" "$installPath/data/$f"
+}
 
 # Módulos
 $modules = @(
@@ -33,15 +76,29 @@ $modules = @(
 )
 
 foreach ($m in $modules) {
-    Invoke-WebRequest "$repo/modules/$m" -OutFile "$installPath/modules/$m"
+    Download-File "$repo/modules/$m" "$installPath/modules/$m"
 }
 
 # Vivetool
-Invoke-WebRequest "$repo/vivetool/ViVeTool.exe" -OutFile "$installPath/vivetool/ViVeTool.exe"
-Invoke-WebRequest "$repo/vivetool/Albacore.ViVe.dll" -OutFile "$installPath/vivetool/Albacore.ViVe.dll"
-Invoke-WebRequest "$repo/vivetool/FeatureDictionary.pfs" -OutFile "$installPath/vivetool/FeatureDictionary.pfs"
-Invoke-WebRequest "$repo/vivetool/Newtonsoft.Json.dll" -OutFile "$installPath/vivetool/Newtonsoft.Json.dll"
+$vt = @("ViVeTool.exe","Albacore.ViVe.dll","FeatureDictionary.pfs","Newtonsoft.Json.dll")
+foreach ($v in $vt) {
+    Download-File "$repo/vivetool/$v" "$installPath/vivetool/$v"
+}
+
+# Registrar comando NeoVcore automaticamente
+$profilePath = $PROFILE
+if (-not (Test-Path $profilePath)) {
+    New-Item -ItemType File -Path $profilePath -Force | Out-Null
+}
+
+$aliasLine = 'Set-Alias NeoVcore "C:\NeoVcore\NeoVcore.ps1"'
+if (-not (Select-String -Path $profilePath -Pattern "NeoVcore.ps1" -Quiet)) {
+    Add-Content -Path $profilePath -Value $aliasLine
+}
 
 Write-Host ""
 Write-Host "Instalação concluída!" -ForegroundColor Green
-Write-Host "Execute:  NeoVcore" -ForegroundColor Yellow
+Write-Host "Abrindo NeoVcore..." -ForegroundColor Cyan
+
+# Abrir automaticamente
+& "$installPath\NeoVcore.ps1"
