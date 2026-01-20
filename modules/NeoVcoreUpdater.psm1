@@ -21,12 +21,12 @@ function Update-NeoVcore {
     # Ler versão local
     $localVersion = ""
     if (Test-Path $localVersionFile) {
-        $localVersion = Get-Content $localVersionFile
+        $localVersion = Get-Content $localVersionFile -Raw
     }
 
     # Ler versão remota
     try {
-        $remoteVersion = (Invoke-WebRequest $remoteVersionUrl -UseBasicParsing).Content.Trim()
+        $remoteVersion = (Invoke-WebRequest $remoteVersionUrl -UseBasicParsing -ErrorAction Stop).Content.Trim()
     }
     catch {
         Write-Host "Erro: Nao foi possivel verificar a versao remota." -ForegroundColor Red
@@ -58,7 +58,7 @@ function Update-NeoVcore {
 
     # Baixar script principal
     try {
-        $remote = Invoke-WebRequest -Uri $remoteMainScript -UseBasicParsing
+        $remote = Invoke-WebRequest -Uri $remoteMainScript -UseBasicParsing -ErrorAction Stop
     }
     catch {
         Write-Host "Erro: Nao foi possivel baixar a nova versao." -ForegroundColor Red
@@ -79,8 +79,13 @@ function Update-NeoVcore {
     Write-Host "Criando backup da versao atual..." -ForegroundColor White
 
     try {
-        Copy-Item $localPath $backupPath -Force
-        Write-Log "Backup do NeoVcore criado"
+        if (Test-Path $localPath) {
+            Copy-Item $localPath $backupPath -Force
+            Write-Log "Backup do NeoVcore criado"
+        }
+        else {
+            Write-Log "Nenhum arquivo local encontrado para backup (instalacao nova)"
+        }
     }
     catch {
         Write-Host "Erro ao criar backup." -ForegroundColor Red
