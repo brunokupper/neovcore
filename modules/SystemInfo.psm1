@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#
     ============================================================
     MÓDULO: SystemInfo.psm1
@@ -30,20 +33,30 @@ function Show-SystemInfo {
     try { $battery = Get-CimInstance Win32_Battery } catch { $battery = $null }
 
     # ------------------------------------------------------------
+    # Uptime seguro (corrigido)
+    # ------------------------------------------------------------
+    $uptime = "N/A"
+
+    try {
+        if ($os.LastBootUpTime) {
+            $boot = [Management.ManagementDateTimeConverter]::ToDateTime($os.LastBootUpTime)
+            $ts = New-TimeSpan -Start $boot -End (Get-Date)
+            $uptime = "{0}d {1}h {2}m" -f $ts.Days, $ts.Hours, $ts.Minutes
+        }
+    }
+    catch {
+        $uptime = "N/A"
+    }
+
+    # ------------------------------------------------------------
     # Processamento
     # ------------------------------------------------------------
     $ramTotalGB = if ($os) { [math]::Round($os.TotalVisibleMemorySize / 1MB, 2) } else { "N/A" }
-
-    $uptime = if ($os) {
-        $boot = $os.LastBootUpTime
-        (New-TimeSpan -Start $boot -End (Get-Date)).ToString("dd'd' hh'h' mm'm'")
-    } else { "N/A" }
 
     $gpuList = if ($gpus) { ($gpus | Select-Object -ExpandProperty Name) -join ", " } else { "N/A" }
 
     $ramModules = if ($ram) { $ram.Count } else { 0 }
     $ramSpeed = if ($ram) { ($ram | Select-Object -ExpandProperty Speed | Sort-Object -Descending | Select-Object -First 1) } else { "N/A" }
-    $ramType = if ($ram) { ($ram | Select-Object -ExpandProperty MemoryType | Select-Object -First 1) } else { "N/A" }
 
     $diskInfo = ""
     foreach ($d in $disks) {
