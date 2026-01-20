@@ -3,19 +3,31 @@
     MÓDULO: Vivetool.psm1
     FUNÇÃO: Executar comandos do Vivetool
     AUTOR: Bruno Kupper (@brunokupper)
-    VERSÃO: 6.0
+    VERSÃO: 6.1
     ============================================================
 #>
 
 # Caminho do executável Vivetool
-$Global:VivetoolPath = "$($env:SystemDrive)\neovcore\vivetool\vivetool.exe"
+$Global:VivetoolPath = "$($env:SystemDrive)\NeoVcore\vivetool\vivetool.exe"
 
 # ============================================================
-# EXECUTAR VIVETOOL
+# EXECUTAR VIVETOOL - ATIVAR FEATURE
 # ============================================================
 
 function Enable-Feature {
     param ([int]$FeatureID)
+
+    if ($FeatureID -le 0) {
+        Write-Host "ID inválido." -ForegroundColor Red
+        Write-Log "Tentativa de ativar ID inválido: $FeatureID"
+        return
+    }
+
+    if (-not (Test-Path $Global:VivetoolPath)) {
+        Write-Host "Vivetool não encontrado em $Global:VivetoolPath" -ForegroundColor Red
+        Write-Log "Vivetool não encontrado"
+        return
+    }
 
     Clear-Host
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
@@ -26,15 +38,40 @@ function Enable-Feature {
     Write-Host "Executando: vivetool /enable /id:$FeatureID" -ForegroundColor DarkGray
     Write-Host ""
 
-    & $Global:VivetoolPath /enable /id:$FeatureID
+    try {
+        & $Global:VivetoolPath /enable /id:$FeatureID /product:$env:SystemDrive 2>$null
+        Write-Log "Feature $FeatureID ativada"
+    }
+    catch {
+        Write-Host "Erro ao ativar recurso." -ForegroundColor Red
+        Write-Log "Erro ao ativar feature $FeatureID"
+        Read-Host "ENTER para continuar"
+        return
+    }
 
     Write-Host ""
     Write-Host "Recurso ativado com sucesso!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
 }
 
+# ============================================================
+# EXECUTAR VIVETOOL - DESATIVAR FEATURE
+# ============================================================
+
 function Disable-Feature {
     param ([int]$FeatureID)
+
+    if ($FeatureID -le 0) {
+        Write-Host "ID inválido." -ForegroundColor Red
+        Write-Log "Tentativa de desativar ID inválido: $FeatureID"
+        return
+    }
+
+    if (-not (Test-Path $Global:VivetoolPath)) {
+        Write-Host "Vivetool não encontrado em $Global:VivetoolPath" -ForegroundColor Red
+        Write-Log "Vivetool não encontrado"
+        return
+    }
 
     Clear-Host
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
@@ -45,35 +82,55 @@ function Disable-Feature {
     Write-Host "Executando: vivetool /disable /id:$FeatureID" -ForegroundColor DarkGray
     Write-Host ""
 
-    & $Global:VivetoolPath /disable /id:$FeatureID
+    try {
+        & $Global:VivetoolPath /disable /id:$FeatureID /product:$env:SystemDrive 2>$null
+        Write-Log "Feature $FeatureID desativada"
+    }
+    catch {
+        Write-Host "Erro ao desativar recurso." -ForegroundColor Red
+        Write-Log "Erro ao desativar feature $FeatureID"
+        Read-Host "ENTER para continuar"
+        return
+    }
 
     Write-Host ""
     Write-Host "Recurso desativado com sucesso!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
 }
 
+# ============================================================
+# CONSULTAR STATUS DE UMA FEATURE
+# ============================================================
+
 function Check-FeatureStatus {
     param ([int]$FeatureID)
 
-    # Executa o vivetool e captura a saída
-    $output = & $Global:VivetoolPath /query /id:$FeatureID 2>$null
+    if ($FeatureID -le 0) { return "Inválido" }
 
-    # Procura pela linha que contém "State"
+    if (-not (Test-Path $Global:VivetoolPath)) {
+        Write-Log "Vivetool não encontrado ao consultar status"
+        return "Erro"
+    }
+
+    try {
+        $output = & $Global:VivetoolPath /query /id:$FeatureID 2>$null
+    }
+    catch {
+        Write-Log "Erro ao consultar status da feature $FeatureID"
+        return "Erro"
+    }
+
+    # Suporte a múltiplos formatos do ViVeTool
     $stateLine = $output | Where-Object { $_ -match "State" }
 
-    if ($stateLine -match "Enabled") {
-        return "Ativado"
-    }
-    elseif ($stateLine -match "Disabled") {
-        return "Desativado"
-    }
-    else {
-        return "Desconhecido"
-    }
+    if ($stateLine -match "Enabled") { return "Ativado" }
+    if ($stateLine -match "Disabled") { return "Desativado" }
+
+    return "Desconhecido"
 }
 
 # ============================================================
-# MENU DE AÇÕES DO RECURSO (NUMÉRICO)
+# MENU DE AÇÕES DO RECURSO
 # ============================================================
 
 function Show-FeatureActions {
@@ -89,14 +146,14 @@ function Show-FeatureActions {
         Write-Host "Recurso: $($Feature.name)"
         Write-Host "ID: $($Feature.id)"
         Write-Host ""
-		$status = Check-FeatureStatus -FeatureID $Feature.id
-		Write-Host "Status: $status"
-		Write-Host ""
 
+        $status = Check-FeatureStatus -FeatureID $Feature.id
+        Write-Host "Status: $status"
+        Write-Host ""
 
         Write-Host "1) Ativar Recurso"
         Write-Host "2) Desativar Recurso"
-        Write-Host "0) Voltar"                      -ForegroundColor red
+        Write-Host "0) Voltar" -ForegroundColor Red
         Write-Host ""
 
         $choice = Read-Host "Escolha"
