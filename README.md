@@ -36,7 +36,7 @@ Execute:
 
 
 ```powershell
-irm https://raw.githubusercontent.com/brunokupper/neovcore/main/install.ps1 | iex"
+irm https://raw.githubusercontent.com/brunokupper/neovcore/main/install.ps1 | iex
 ```
 
 
