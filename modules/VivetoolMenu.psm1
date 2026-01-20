@@ -1,4 +1,4 @@
-﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 
 # ============================================================
@@ -83,7 +83,7 @@ function Show-IdsTwoColumns {
         Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
         Write-Host "A) Ativar TODOS os recursos da categoria"
         Write-Host "D) Desativar TODOS os recursos da categoria"
-        Write-Host "0) Voltar"                      -ForegroundColor redconfig
+        Write-Host "0) Voltar"                      -ForegroundColor red
         Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
         Write-Host ""
 
