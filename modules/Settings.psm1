@@ -7,9 +7,12 @@
     ============================================================
 #>
 
+# ------------------------------------------------------------
+# Carregar configuracoes do arquivo Settings.json
+# (Agora integrado ao SettingsManager.psm1)
+# ------------------------------------------------------------
 function Load-Settings {
 
-    # Caminho correto para Settings.json na pasta /data
     $settingsPath = Join-Path $PSScriptRoot "..\data\Settings.json"
 
     if (-not (Test-Path $settingsPath)) {
@@ -69,6 +72,8 @@ function Show-SettingsMenu {
                     $Global:NeoVcoreSettings.Theme = "dark"
                     Write-Host "Tema alterado para ESCURO." -ForegroundColor Green
                 }
+
+                Save-Settings
                 Start-Sleep -Milliseconds 700
                 return
             }
@@ -77,6 +82,8 @@ function Show-SettingsMenu {
             "2" {
                 $Global:NeoVcoreSettings.Sounds = -not $Global:NeoVcoreSettings.Sounds
                 Write-Host "Sons agora estao: $($Global:NeoVcoreSettings.Sounds)" -ForegroundColor Green
+
+                Save-Settings
                 Start-Sleep -Milliseconds 700
             }
 
@@ -84,14 +91,18 @@ function Show-SettingsMenu {
             "3" {
                 $Global:NeoVcoreSettings.Turbo = -not $Global:NeoVcoreSettings.Turbo
                 Write-Host "Modo Turbo agora esta: $($Global:NeoVcoreSettings.Turbo)" -ForegroundColor Green
+
+                Save-Settings
                 Start-Sleep -Milliseconds 700
             }
 
             # Reset
             "4" {
-                $Global:NeoVcoreSettings.Theme = "dark"
+                $Global:NeoVcoreSettings.Theme  = "dark"
                 $Global:NeoVcoreSettings.Sounds = $true
-                $Global:NeoVcoreSettings.Turbo = $false
+                $Global:NeoVcoreSettings.Turbo  = $false
+
+                Save-Settings
 
                 Write-Host "Configuracoes restauradas para o padrao." -ForegroundColor Yellow
                 Start-Sleep -Milliseconds 900
