@@ -3,11 +3,63 @@
 # ============================================================
 
 $Global:LogPath = Join-Path $PSScriptRoot "..\data\logs.txt"
+$Global:MaxLogSizeKB = 512   # Limite de ~0.5 MB para evitar arquivo gigante
+
+# ------------------------------------------------------------
+# Garantir que o arquivo de log exista
+# ------------------------------------------------------------
+function Initialize-LogFile {
+
+    try {
+        if (-not (Test-Path $Global:LogPath)) {
+            New-Item -ItemType File -Path $Global:LogPath -Force | Out-Null
+        }
+    }
+    catch {
+        Write-Host "Erro ao inicializar arquivo de log." -ForegroundColor Red
+    }
+}
+
+# ------------------------------------------------------------
+# Verificar tamanho do log e rotacionar se necessário
+# ------------------------------------------------------------
+function Rotate-Logs {
+
+    if (-not (Test-Path $Global:LogPath)) { return }
+
+    try {
+        $sizeKB = (Get-Item $Global:LogPath).Length / 1KB
+
+        if ($sizeKB -ge $Global:MaxLogSizeKB) {
+
+            $backup = $Global:LogPath + ".old"
+
+            # Apagar backup antigo se existir
+            if (Test-Path $backup) {
+                Remove-Item $backup -Force
+            }
+
+            # Criar backup
+            Rename-Item -Path $Global:LogPath -NewName "logs.txt.old"
+
+            # Criar novo arquivo vazio
+            New-Item -ItemType File -Path $Global:LogPath -Force | Out-Null
+
+            Write-Host "Log rotacionado (arquivo estava muito grande)." -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "Erro ao rotacionar logs." -ForegroundColor Red
+    }
+}
 
 # ------------------------------------------------------------
 # Registrar mensagem no log
 # ------------------------------------------------------------
 function Write-Log($msg) {
+
+    Initialize-LogFile
+    Rotate-Logs
 
     try {
         $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -29,11 +81,18 @@ function Show-Logs {
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 
-    if (Test-Path $Global:LogPath) {
-        Get-Content $Global:LogPath
+    Initialize-LogFile
+
+    try {
+        if (Test-Path $Global:LogPath) {
+            Get-Content $Global:LogPath
+        }
+        else {
+            Write-Host "Nenhum log encontrado." -ForegroundColor DarkGray
+        }
     }
-    else {
-        Write-Host "Nenhum log encontrado." -ForegroundColor DarkGray
+    catch {
+        Write-Host "Erro ao ler logs." -ForegroundColor Red
     }
 
     Write-Host ""
@@ -48,6 +107,7 @@ function Clear-Logs {
     if (Test-Path $Global:LogPath) {
         try {
             Remove-Item $Global:LogPath -Force
+            Initialize-LogFile
             Write-Host "Logs apagados com sucesso." -ForegroundColor Yellow
             Write-Log "Logs apagados manualmente"
         }
