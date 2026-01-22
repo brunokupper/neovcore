@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - SISTEMA DE LOGS
 # ============================================================
@@ -121,3 +124,4 @@ function Clear-Logs {
 
     Start-Sleep 1
 }
+
