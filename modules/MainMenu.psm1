@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - MENU PRINCIPAL
 # ============================================================
@@ -86,4 +89,5 @@ function Show-SystemInfo {
 
     Write-Host "Pressione ENTER para voltar..."
     Read-Host
+
 }
