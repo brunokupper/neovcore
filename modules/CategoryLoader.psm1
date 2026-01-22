@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - MENU DE CATEGORIAS (OTIMIZADO)
 # ============================================================
@@ -173,4 +176,5 @@ function Show-CategoryDetails {
             }
         }
     }
+
 }
