@@ -1,40 +1,15 @@
-# Neo Vcore V6 - Atualizador Inteligente
+# Neo Vcore V6 - Atualizador Completo (FORÇADO)
 # Autor: Bruno Kupper
 
-Write-Host "Verificando atualizações do NeoVcore..." -ForegroundColor Cyan
+Write-Host "Forçando atualização completa do NeoVcore..." -ForegroundColor Cyan
 
 $installPath = "$env:SystemDrive\NeoVcore"
 $repo = "https://raw.githubusercontent.com/brunokupper/neovcore/main"
 
 function Download-File($url, $dest) {
+    Write-Host "Atualizando: $dest" -ForegroundColor Cyan
     Invoke-WebRequest $url -OutFile $dest -UseBasicParsing
 }
-
-# Verificar versão local e remota
-$localVersionFile = "$installPath\data\version.txt"
-$remoteVersionUrl = "$repo/data/version.txt"
-
-$localVersion = ""
-$remoteVersion = ""
-
-if (Test-Path $localVersionFile) {
-    $localVersion = Get-Content $localVersionFile
-}
-
-try {
-    $remoteVersion = (Invoke-WebRequest $remoteVersionUrl -UseBasicParsing).Content
-} catch {
-    Write-Host "Não foi possível verificar a versão online." -ForegroundColor Yellow
-}
-
-if ($localVersion -eq $remoteVersion -and $localVersion -ne "") {
-    Write-Host "NeoVcore já está atualizado (versão $localVersion)." -ForegroundColor Green
-    Write-Host "Abrindo NeoVcore..." -ForegroundColor Cyan
-    & "$installPath\NeoVcore.ps1"
-    exit
-}
-
-Write-Host "Atualizando NeoVcore para a versão $remoteVersion..." -ForegroundColor Cyan
 
 # Atualizar arquivo principal
 Download-File "$repo/NeoVcore.ps1" "$installPath\NeoVcore.ps1"
@@ -57,7 +32,7 @@ foreach ($v in $vt) {
     Download-File "$repo/vivetool/$v" "$installPath/vivetool/$v"
 }
 
-Write-Host "Atualização concluída!" -ForegroundColor Green
+Write-Host "Atualização completa concluída!" -ForegroundColor Green
 Write-Host "Abrindo NeoVcore..." -ForegroundColor Cyan
 
 & "$installPath\NeoVcore.ps1"
