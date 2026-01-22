@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MODULO: Scanner.psm1
@@ -162,3 +165,4 @@ function Show-FeatureScannerMenu {
     Write-Host ""
     Read-Host "Pressione ENTER para continuar"
 }
+
