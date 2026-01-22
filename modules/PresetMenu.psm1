@@ -87,7 +87,28 @@ function Apply-Preset {
         Write-Host ""
 
         foreach ($id in $ids) {
-            Enable-FeatureSilent -FeatureID $id
+
+            # Buscar nome da feature
+            $featureName = "(Nome não encontrado)"
+            foreach ($cat in $features.PSObject.Properties.Name) {
+                foreach ($f in $features.$cat) {
+                    if ($f.id -eq $id) {
+                        $featureName = $f.name
+                        break
+                    }
+                }
+            }
+
+            # Executar ativação silenciosa
+            $result = Enable-FeatureSilent -FeatureID $id
+
+            # Exibir resultado formatado
+            if ($result -eq $true) {
+                Write-Host "Ativado  →  ID $id  |  $featureName" -ForegroundColor Green
+            }
+            else {
+                Write-Host "ERRO ao ativar  →  ID $id  |  $featureName" -ForegroundColor Red
+            }
         }
 
         Write-Host ""

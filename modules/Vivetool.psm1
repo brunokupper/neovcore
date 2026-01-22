@@ -6,12 +6,64 @@ $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
     MÓDULO: Vivetool.psm1
     FUNÇÃO: Executar comandos do Vivetool
     AUTOR: Bruno Kupper (@brunokupper)
-    VERSÃO: 6.2
+    VERSÃO: 6.2 (Revisado)
     ============================================================
 #>
 
 # Caminho do executável Vivetool
 $Global:VivetoolPath = "$($env:SystemDrive)\NeoVcore\vivetool\vivetool.exe"
+
+# ============================================================
+# FUNÇÃO AUXILIAR — EXECUTAR COMANDO E TRATAR ERROS
+# ============================================================
+
+function Invoke-VivetoolCommand {
+    param(
+        [string[]]$Arguments,   # ← CORREÇÃO 1: virou array
+        [string]$ActionDescription,
+        [switch]$Silent
+    )
+
+    if (-not (Test-Path $Global:VivetoolPath)) {
+        Write-Log "Vivetool não encontrado ao executar: $Arguments"
+        if (-not $Silent) {
+            Write-Host "Vivetool não encontrado em $Global:VivetoolPath" -ForegroundColor Red
+            Read-Host "ENTER para continuar"
+        }
+        return $false
+    }
+
+    try {
+        # ← CORREÇÃO 2: argumentos separados
+        $output = & $Global:VivetoolPath @Arguments 2>&1
+
+        Write-Log "$ActionDescription → $Arguments"
+        Write-Log "Saída do Vivetool: $output"
+
+        if ($output -match "error|failed|unrecognized|not found") {
+            if (-not $Silent) {
+                Write-Host "O Vivetool retornou uma mensagem de erro:" -ForegroundColor Red
+                Write-Host $output -ForegroundColor Yellow
+                Read-Host "ENTER para continuar"
+            }
+            return $false
+        }
+
+        return $true
+    }
+    catch {
+        Write-Log "Exceção ao executar Vivetool: $Arguments"
+        Write-Log $_.Exception.Message
+
+        if (-not $Silent) {
+            Write-Host "Erro inesperado ao executar o Vivetool." -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Yellow
+            Read-Host "ENTER para continuar"
+        }
+
+        return $false
+    }
+}
 
 # ============================================================
 # EXECUTAR VIVETOOL - ATIVAR FEATURE (INTERATIVO)
@@ -26,12 +78,6 @@ function Enable-Feature {
         return
     }
 
-    if (-not (Test-Path $Global:VivetoolPath)) {
-        Write-Host "Vivetool não encontrado em $Global:VivetoolPath" -ForegroundColor Red
-        Write-Log "Vivetool não encontrado"
-        return
-    }
-
     Clear-Host
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host "|                    ATIVANDO RECURSO...                    |" -ForegroundColor Yellow
@@ -41,19 +87,18 @@ function Enable-Feature {
     Write-Host "Executando: vivetool /enable /id:$FeatureID" -ForegroundColor DarkGray
     Write-Host ""
 
-    try {
-        & $Global:VivetoolPath /enable /id:$FeatureID /product:$env:SystemDrive 2>$null
-        Write-Log "Feature $FeatureID ativada"
-    }
-    catch {
-        Write-Host "Erro ao ativar recurso." -ForegroundColor Red
-        Write-Log "Erro ao ativar feature $FeatureID"
-        Read-Host "ENTER para continuar"
-        return
+    $ok = Invoke-VivetoolCommand `
+        -Arguments @("/enable", "/id:$FeatureID") `
+        -ActionDescription "Ativar Feature $FeatureID"
+
+    if ($ok) {
+        Write-Host ""
+        Write-Host "Recurso ativado com sucesso!" -ForegroundColor Green
+    } else {
+        Write-Host ""
+        Write-Host "Falha ao ativar o recurso." -ForegroundColor Red
     }
 
-    Write-Host ""
-    Write-Host "Recurso ativado com sucesso!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
 }
 
@@ -70,12 +115,6 @@ function Disable-Feature {
         return
     }
 
-    if (-not (Test-Path $Global:VivetoolPath)) {
-        Write-Host "Vivetool não encontrado em $Global:VivetoolPath" -ForegroundColor Red
-        Write-Log "Vivetool não encontrado"
-        return
-    }
-
     Clear-Host
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host "|                   DESATIVANDO RECURSO...                   |" -ForegroundColor Yellow
@@ -85,19 +124,18 @@ function Disable-Feature {
     Write-Host "Executando: vivetool /disable /id:$FeatureID" -ForegroundColor DarkGray
     Write-Host ""
 
-    try {
-        & $Global:VivetoolPath /disable /id:$FeatureID /product:$env:SystemDrive 2>$null
-        Write-Log "Feature $FeatureID desativada"
-    }
-    catch {
-        Write-Host "Erro ao desativar recurso." -ForegroundColor Red
-        Write-Log "Erro ao desativar feature $FeatureID"
-        Read-Host "ENTER para continuar"
-        return
+    $ok = Invoke-VivetoolCommand `
+        -Arguments @("/disable", "/id:$FeatureID") `
+        -ActionDescription "Desativar Feature $FeatureID"
+
+    if ($ok) {
+        Write-Host ""
+        Write-Host "Recurso desativado com sucesso!" -ForegroundColor Green
+    } else {
+        Write-Host ""
+        Write-Host "Falha ao desativar o recurso." -ForegroundColor Red
     }
 
-    Write-Host ""
-    Write-Host "Recurso desativado com sucesso!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
 }
 
@@ -116,10 +154,12 @@ function Check-FeatureStatus {
     }
 
     try {
-        $output = & $Global:VivetoolPath /query /id:$FeatureID 2>$null
+        $output = & $Global:VivetoolPath /query /id:$FeatureID 2>&1
+        Write-Log "Consulta de status para $FeatureID → $output"
     }
     catch {
         Write-Log "Erro ao consultar status da feature $FeatureID"
+        Write-Log $_.Exception.Message
         return "Erro"
     }
 
@@ -166,7 +206,7 @@ function Show-FeatureActions {
             "0" { return }
             default {
                 Write-Host ""
-                Write-Host "Opcao invalida." -ForegroundColor Red
+                Write-Host "Opção inválida." -ForegroundColor Red
                 Read-Host "Pressione ENTER para tentar novamente"
             }
         }
@@ -174,41 +214,33 @@ function Show-FeatureActions {
 }
 
 # ============================================================
-# EXECUTAR VIVETOOL - ATIVAR FEATURE (SILENCIOSO, PARA PRESETS)
+# EXECUTAR VIVETOOL - ATIVAR FEATURE (SILENCIOSO)
 # ============================================================
 
 function Enable-FeatureSilent {
     param ([int]$FeatureID)
 
     if ($FeatureID -le 0) { return }
-    if (-not (Test-Path $Global:VivetoolPath)) { return }
 
-    try {
-        & $Global:VivetoolPath /enable /id:$FeatureID /product:$env:SystemDrive 2>$null
-        Write-Log "Feature $FeatureID ativada (silent)"
-    }
-    catch {
-        Write-Log "Erro ao ativar feature $FeatureID (silent)"
-    }
+    Invoke-VivetoolCommand `
+        -Arguments @("/enable", "/id:$FeatureID") `
+        -ActionDescription "Ativar Feature $FeatureID (silent)" `
+        -Silent
 }
 
 # ============================================================
-# EXECUTAR VIVETOOL - DESATIVAR FEATURE (SILENCIOSO, PARA LOTES)
+# EXECUTAR VIVETOOL - DESATIVAR FEATURE (SILENCIOSO)
 # ============================================================
 
 function Disable-FeatureSilent {
     param ([int]$FeatureID)
 
     if ($FeatureID -le 0) { return }
-    if (-not (Test-Path $Global:VivetoolPath)) { return }
 
-    try {
-        & $Global:VivetoolPath /disable /id:$FeatureID /product:$env:SystemDrive 2>$null
-        Write-Log "Feature $FeatureID desativada (silent)"
-    }
-    catch {
-        Write-Log "Erro ao desativar feature $FeatureID (silent)"
-    }
+    Invoke-VivetoolCommand `
+        -Arguments @("/disable", "/id:$FeatureID") `
+        -ActionDescription "Desativar Feature $FeatureID (silent)" `
+        -Silent
 }
 
 Export-ModuleMember -Function Enable-Feature, Disable-Feature, Enable-FeatureSilent, Disable-FeatureSilent, Check-FeatureStatus, Show-FeatureActions
