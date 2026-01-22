@@ -2,138 +2,131 @@
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 
 # ============================================================
-# NEO VCORE V6 - ATUALIZADOR AUTOMATICO DO NEOVCORE (INTELIGENTE)
+# NEO VCORE V6 - ATUALIZADOR INTELIGENTE (SHA256 + ROLLBACK)
 # ============================================================
 
 function Update-NeoVcore {
 
     Clear-Host
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
-    Write-Host "|                ATUALIZADOR AUTOMATICO DO NEOVCORE          |" -ForegroundColor Yellow
+    Write-Host "|                ATUALIZADOR INTELIGENTE DO NEOVCORE         |" -ForegroundColor Yellow
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 
     $installPath = "$env:SystemDrive\NeoVcore"
-    $localVersionFile = "$installPath\data\version.txt"
-    $remoteVersionUrl = "https://raw.githubusercontent.com/brunokupper/neovcore/main/data/version.txt"
+    $repo = "https://raw.githubusercontent.com/brunokupper/neovcore/main"
+    $backupRoot = "$installPath\backup"
+    $timestamp = (Get-Date -Format "yyyy-MM-dd_HH-mm-ss")
+    $backupPath = "$backupRoot\$timestamp"
 
-    Write-Host "Verificando versao remota..." -ForegroundColor White
+    # Criar pasta de backup
+    New-Item -ItemType Directory -Path $backupPath -Force | Out-Null
 
-    # Ler versão local
-    $localVersion = ""
-    if (Test-Path $localVersionFile) {
-        $localVersion = Get-Content $localVersionFile -Raw
+    # Arquivos a atualizar
+    $fileList = @(
+        @{ Remote="$repo/NeoVcore.ps1"; Local="$installPath\NeoVcore.ps1" },
+        @{ Remote="$repo/data/features.json"; Local="$installPath\data\features.json" },
+        @{ Remote="$repo/data/logs.txt"; Local="$installPath\data\logs.txt" },
+        @{ Remote="$repo/data/presets.json"; Local="$installPath\data\presets.json" },
+        @{ Remote="$repo/data/Settings.json"; Local="$installPath\data\Settings.json" },
+        @{ Remote="$repo/data/version.txt"; Local="$installPath\data\version.txt" }
+    )
+
+    # Módulos
+    $modules = Get-ChildItem "$installPath\modules" | Select-Object -ExpandProperty Name
+    foreach ($m in $modules) {
+        $fileList += @{ Remote="$repo/modules/$m"; Local="$installPath\modules\$m" }
     }
 
-    # Ler versão remota
-    try {
-        $remoteVersion = (Invoke-WebRequest $remoteVersionUrl -UseBasicParsing -ErrorAction Stop).Content.Trim()
-    }
-    catch {
-        Write-Host "Erro: Nao foi possivel verificar a versao remota." -ForegroundColor Red
-        Write-Log "Falha ao verificar versao remota"
-        return
+    # Vivetool
+    $vtFiles = @("ViVeTool.exe","Albacore.ViVe.dll","FeatureDictionary.pfs","Newtonsoft.Json.dll")
+    foreach ($v in $vtFiles) {
+        $fileList += @{ Remote="$repo/vivetool/$v"; Local="$installPath\vivetool\$v" }
     }
 
-    Write-Host ""
-    Write-Host "Versao instalada: $localVersion" -ForegroundColor DarkGray
-    Write-Host "Versao disponivel: $remoteVersion" -ForegroundColor DarkGray
-    Write-Host ""
+    # ============================================================
+    # FUNÇÃO: SHA256
+    # ============================================================
 
-    # Se já estiver atualizado
-    if ($localVersion -eq $remoteVersion -and $localVersion -ne "") {
-        Write-Host "NeoVcore ja esta atualizado!" -ForegroundColor Green
-        Write-Host ""
-        Read-Host "Pressione ENTER para abrir o NeoVcore"
-        & "$installPath\NeoVcore.ps1"
-        return
+    function Get-HashSHA256($path) {
+        if (-not (Test-Path $path)) { return "" }
+        return (Get-FileHash -Path $path -Algorithm SHA256).Hash
     }
 
-    Write-Host "Atualizacao disponivel! Comparando arquivos..." -ForegroundColor White
+    # ============================================================
+    # FUNÇÃO: DOWNLOAD RÁPIDO
+    # ============================================================
 
-    # ============================
-    # FUNÇÃO DE COMPARAÇÃO
-    # ============================
-    function Compare-And-Update($remoteUrl, $localPath) {
+    function Fast-Download($url, $dest) {
         try {
-            $remoteContent = (Invoke-WebRequest $remoteUrl -UseBasicParsing -ErrorAction Stop).Content
+            Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -ErrorAction Stop
+            return $true
         }
         catch {
-            Write-Host "Erro ao baixar: $remoteUrl" -ForegroundColor Red
-            return
-        }
-
-        $localContent = ""
-        if (Test-Path $localPath) {
-            $localContent = Get-Content $localPath -Raw
-        }
-
-        if ($remoteContent -ne $localContent) {
-            Write-Host "Atualizando: $localPath" -ForegroundColor Cyan
-            $remoteContent | Out-File $localPath -Encoding UTF8
-        }
-        else {
-            Write-Host "Sem mudanças: $localPath" -ForegroundColor DarkGray
+            return $false
         }
     }
 
-    # ============================
-    # ATUALIZAR ARQUIVO PRINCIPAL
-    # ============================
+    # ============================================================
+    # PROCESSO DE ATUALIZAÇÃO
+    # ============================================================
 
-    $mainLocal = "$installPath\NeoVcore.ps1"
-    $mainRemote = "https://raw.githubusercontent.com/brunokupper/neovcore/main/NeoVcore.ps1"
+    $total = $fileList.Count
+    $index = 0
 
-    Write-Host "Criando backup da versao atual..." -ForegroundColor White
-    if (Test-Path $mainLocal) {
-        Copy-Item $mainLocal "$installPath\NeoVcore_backup.ps1" -Force
+    Write-Host "Iniciando atualização inteligente..." -ForegroundColor White
+    Write-Host ""
+
+    foreach ($file in $fileList) {
+
+        $index++
+        $remote = $file.Remote
+        $local = $file.Local
+        $backup = "$backupPath\" + (Split-Path $local -Leaf)
+
+        Write-Progress -Activity "Atualizando NeoVcore..." `
+                       -Status "Processando $index de $total" `
+                       -PercentComplete (($index / $total) * 100)
+
+        # Baixar arquivo remoto temporário
+        $temp = "$env:TEMP\neo_temp_$index"
+        $downloadOK = Fast-Download $remote $temp
+
+        if (-not $downloadOK) {
+            Write-Host "[ERRO] Falha ao baixar: $remote" -ForegroundColor Red
+            continue
+        }
+
+        # Comparar SHA256
+        $localHash = Get-HashSHA256 $local
+        $remoteHash = Get-HashSHA256 $temp
+
+        if ($localHash -eq $remoteHash -and $localHash -ne "") {
+            Write-Host "[SKIP] Sem mudanças: $local" -ForegroundColor DarkGray
+            Remove-Item $temp -Force
+            continue
+        }
+
+        # Backup
+        if (Test-Path $local) {
+            Copy-Item $local $backup -Force
+        }
+
+        # Atualizar
+        try {
+            Move-Item $temp $local -Force
+            Write-Host "[OK] Atualizado: $local" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "[ERRO] Falha ao atualizar: $local" -ForegroundColor Red
+        }
     }
 
-    Compare-And-Update $mainRemote $mainLocal
-
-    # ============================
-    # ATUALIZAR PASTA DATA
-    # ============================
-
-    $dataFiles = @("features.json","logs.txt","presets.json","Settings.json","version.txt")
-
-    foreach ($file in $dataFiles) {
-        Compare-And-Update `
-            "https://raw.githubusercontent.com/brunokupper/neovcore/main/data/$file" `
-            "$installPath\data\$file"
-    }
-
-    # ============================
-    # ATUALIZAR MÓDULOS
-    # ============================
-
-    $modules = Get-ChildItem "$installPath\modules" | Select-Object -ExpandProperty Name
-
-    foreach ($m in $modules) {
-        Compare-And-Update `
-            "https://raw.githubusercontent.com/brunokupper/neovcore/main/modules/$m" `
-            "$installPath\modules\$m"
-    }
-
-    # ============================
-    # ATUALIZAR VIVETOOL
-    # ============================
-
-    $vtFiles = @("ViVeTool.exe","Albacore.ViVe.dll","FeatureDictionary.pfs","Newtonsoft.Json.dll")
-
-    foreach ($v in $vtFiles) {
-        Compare-And-Update `
-            "https://raw.githubusercontent.com/brunokupper/neovcore/main/vivetool/$v" `
-            "$installPath\vivetool\$v"
-    }
-
-    # ============================
-    # FINALIZAÇÃO
-    # ============================
+    Write-Progress -Activity "Atualização concluída" -Completed
 
     Write-Host ""
-    Write-Host "NeoVcore atualizado com sucesso!" -ForegroundColor Green
-    Write-Host "Backup salvo como NeoVcore_backup.ps1" -ForegroundColor DarkGray
+    Write-Host "Atualização concluída com sucesso!" -ForegroundColor Green
+    Write-Host "Backup salvo em: $backupPath" -ForegroundColor DarkGray
     Write-Host ""
 
     Read-Host "Pressione ENTER para abrir o NeoVcore"
