@@ -1,5 +1,7 @@
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+$PSDefaultParameterValues['Set-Content:Encoding'] = 'utf8'
+$PSDefaultParameterValues['Add-Content:Encoding'] = 'utf8'
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ============================================================
 # CARREGAR MÓDULOS
@@ -211,4 +213,5 @@ function Show-MainMenu {
 # ============================================================
 
 Show-SplashScreen
+
 Show-MainMenu
