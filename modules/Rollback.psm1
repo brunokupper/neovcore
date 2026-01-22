@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - ROLLBACK DO FEATURES.JSON
 # ============================================================
@@ -31,4 +34,5 @@ function Rollback-FeaturesJson {
     }
 
     Start-Sleep 1
+
 }
