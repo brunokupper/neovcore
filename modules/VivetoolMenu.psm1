@@ -1,8 +1,3 @@
-$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
-$PSDefaultParameterValues['Set-Content:Encoding'] = 'utf8'
-$PSDefaultParameterValues['Add-Content:Encoding'] = 'utf8'
-$OutputEncoding = [System.Text.Encoding]::UTF8
-
 # ============================================================
 # NEO VCORE V6 - VIVETOOL MENU UNIFICADO (VISUAL PADRONIZADO)
 # ============================================================
@@ -37,7 +32,6 @@ function Write-Header {
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 }
-
 
 # ------------------------------------------------------------
 # IMPRESSÃO EM DUAS COLUNAS
@@ -85,7 +79,7 @@ function Show-IdsTwoColumns {
         Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
         Write-Host "A) Ativar TODOS os recursos da categoria"
         Write-Host "D) Desativar TODOS os recursos da categoria"
-        Write-Host "0) Voltar"                      -ForegroundColor red
+        Write-Host "0) Voltar" -ForegroundColor Red
         Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
         Write-Host ""
 
@@ -113,8 +107,6 @@ function Show-IdsTwoColumns {
 
                     if ($num -ge 1 -and $num -le $Items.Count) {
                         $selected = $Items[$num - 1]
-
-                        # CHAMA O MENU INDIVIDUAL DO VIVETOOL
                         Show-FeatureActions -Feature $selected
                         continue
                     }
@@ -150,7 +142,7 @@ function Show-VivetoolResourcesMenu {
         Write-Host ""
         Write-Host "12) Ativar todas as categorias     13) Desativar todas as categorias"
         Write-Host ""
-        Write-Host "0) Voltar"                      -ForegroundColor red
+        Write-Host "0) Voltar" -ForegroundColor Red
         Write-Host ""
 
         $choice = Read-Host "Escolha"
@@ -221,4 +213,3 @@ function Show-VivetoolResourcesMenu {
 }
 
 Export-ModuleMember -Function Show-VivetoolResourcesMenu
-
