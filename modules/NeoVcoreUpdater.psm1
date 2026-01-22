@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - ATUALIZADOR AUTOMATICO DO NEOVCORE
 # ============================================================
@@ -121,3 +124,4 @@ function Update-NeoVcore {
     Read-Host "Pressione ENTER para abrir o NeoVcore"
     & "$installPath\NeoVcore.ps1"
 }
+
