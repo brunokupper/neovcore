@@ -1,12 +1,12 @@
 ﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 
-<#  
+<#
     ============================================================
     MÓDULO: Vivetool.psm1
     FUNÇÃO: Executar comandos do Vivetool
     AUTOR: Bruno Kupper (@brunokupper)
-    VERSÃO: 6.1
+    VERSÃO: 6.2
     ============================================================
 #>
 
@@ -14,7 +14,7 @@ $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 $Global:VivetoolPath = "$($env:SystemDrive)\NeoVcore\vivetool\vivetool.exe"
 
 # ============================================================
-# EXECUTAR VIVETOOL - ATIVAR FEATURE
+# EXECUTAR VIVETOOL - ATIVAR FEATURE (INTERATIVO)
 # ============================================================
 
 function Enable-Feature {
@@ -58,7 +58,7 @@ function Enable-Feature {
 }
 
 # ============================================================
-# EXECUTAR VIVETOOL - DESATIVAR FEATURE
+# EXECUTAR VIVETOOL - DESATIVAR FEATURE (INTERATIVO)
 # ============================================================
 
 function Disable-Feature {
@@ -123,7 +123,6 @@ function Check-FeatureStatus {
         return "Erro"
     }
 
-    # Suporte a múltiplos formatos do ViVeTool
     $stateLine = $output | Where-Object { $_ -match "State" }
 
     if ($stateLine -match "Enabled") { return "Ativado" }
@@ -133,7 +132,7 @@ function Check-FeatureStatus {
 }
 
 # ============================================================
-# MENU DE AÇÕES DO RECURSO
+# MENU DE AÇÕES DO RECURSO (INTERATIVO)
 # ============================================================
 
 function Show-FeatureActions {
@@ -174,3 +173,42 @@ function Show-FeatureActions {
     }
 }
 
+# ============================================================
+# EXECUTAR VIVETOOL - ATIVAR FEATURE (SILENCIOSO, PARA PRESETS)
+# ============================================================
+
+function Enable-FeatureSilent {
+    param ([int]$FeatureID)
+
+    if ($FeatureID -le 0) { return }
+    if (-not (Test-Path $Global:VivetoolPath)) { return }
+
+    try {
+        & $Global:VivetoolPath /enable /id:$FeatureID /product:$env:SystemDrive 2>$null
+        Write-Log "Feature $FeatureID ativada (silent)"
+    }
+    catch {
+        Write-Log "Erro ao ativar feature $FeatureID (silent)"
+    }
+}
+
+# ============================================================
+# EXECUTAR VIVETOOL - DESATIVAR FEATURE (SILENCIOSO, PARA LOTES)
+# ============================================================
+
+function Disable-FeatureSilent {
+    param ([int]$FeatureID)
+
+    if ($FeatureID -le 0) { return }
+    if (-not (Test-Path $Global:VivetoolPath)) { return }
+
+    try {
+        & $Global:VivetoolPath /disable /id:$FeatureID /product:$env:SystemDrive 2>$null
+        Write-Log "Feature $FeatureID desativada (silent)"
+    }
+    catch {
+        Write-Log "Erro ao desativar feature $FeatureID (silent)"
+    }
+}
+
+Export-ModuleMember -Function Enable-Feature, Disable-Feature, Enable-FeatureSilent, Disable-FeatureSilent, Check-FeatureStatus, Show-FeatureActions

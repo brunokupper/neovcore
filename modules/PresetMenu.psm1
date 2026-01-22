@@ -16,9 +16,7 @@ function Apply-Preset {
     param([string]$PresetName)
 
     try {
-        # Garante que o nome do preset seja uma string única
         $PresetName = [string]$PresetName
-
         $presets = Get-Presets
 
         if (-not $presets.Contains($PresetName)) {
@@ -89,7 +87,7 @@ function Apply-Preset {
         Write-Host ""
 
         foreach ($id in $ids) {
-            Invoke-VivetoolEnable -Id $id
+            Enable-FeatureSilent -FeatureID $id
         }
 
         Write-Host ""
@@ -118,7 +116,7 @@ function Show-PresetMenu {
 
         try {
             $presets = Get-Presets
-            $names = @($presets.Keys)   # força array real
+            $names = @($presets.Keys)
         }
         catch {
             Write-Host ""
