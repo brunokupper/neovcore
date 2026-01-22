@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 function Update-FeaturesJson {
 
     Clear-Host
@@ -73,3 +76,4 @@ function Update-FeaturesJson {
     Write-Host ""
     Read-Host "ENTER para continuar"
 }
+
