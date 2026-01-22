@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MÓDULO: Optimization.psm1
@@ -136,4 +139,5 @@ function Optimize-System {
     Write-Host ""
     Write-Host "Sistema otimizado!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
+
 }
