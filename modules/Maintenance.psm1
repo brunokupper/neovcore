@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MÓDULO: Maintenance.psm1
@@ -132,4 +135,5 @@ function Repair-SFC {
     Write-Host ""
     Write-Host "Verificacao concluida!" -ForegroundColor Green
     Read-Host "Pressione ENTER para continuar"
+
 }
