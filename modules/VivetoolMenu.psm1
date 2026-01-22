@@ -1,3 +1,9 @@
+﻿$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+$env:LC_ALL = "en_US.UTF-8"
+
 # ============================================================
 # NEO VCORE V6 - VIVETOOL MENU UNIFICADO (VISUAL PADRONIZADO)
 # ============================================================
