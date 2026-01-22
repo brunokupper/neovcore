@@ -2,7 +2,7 @@
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 
 # ============================================================
-# NEO VCORE V6 - ATUALIZADOR AUTOMATICO DO NEOVCORE
+# NEO VCORE V6 - ATUALIZADOR AUTOMATICO DO NEOVCORE (INTELIGENTE)
 # ============================================================
 
 function Update-NeoVcore {
@@ -13,11 +13,9 @@ function Update-NeoVcore {
     Write-Host "+------------------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 
-    # Caminhos principais
     $installPath = "$env:SystemDrive\NeoVcore"
     $localVersionFile = "$installPath\data\version.txt"
     $remoteVersionUrl = "https://raw.githubusercontent.com/brunokupper/neovcore/main/data/version.txt"
-    $remoteMainScript = "https://raw.githubusercontent.com/brunokupper/neovcore/main/NeoVcore.ps1"
 
     Write-Host "Verificando versao remota..." -ForegroundColor White
 
@@ -37,12 +35,6 @@ function Update-NeoVcore {
         return
     }
 
-    if (-not $remoteVersion) {
-        Write-Host "Erro: Versao remota vazia." -ForegroundColor Red
-        Write-Log "Versao remota vazia"
-        return
-    }
-
     Write-Host ""
     Write-Host "Versao instalada: $localVersion" -ForegroundColor DarkGray
     Write-Host "Versao disponivel: $remoteVersion" -ForegroundColor DarkGray
@@ -57,64 +49,87 @@ function Update-NeoVcore {
         return
     }
 
-    Write-Host "Atualizacao disponivel! Baixando nova versao..." -ForegroundColor White
+    Write-Host "Atualizacao disponivel! Comparando arquivos..." -ForegroundColor White
 
-    # Baixar script principal
-    try {
-        $remote = Invoke-WebRequest -Uri $remoteMainScript -UseBasicParsing -ErrorAction Stop
-    }
-    catch {
-        Write-Host "Erro: Nao foi possivel baixar a nova versao." -ForegroundColor Red
-        Write-Log "Falha ao baixar NeoVcore.ps1 remoto"
-        return
-    }
+    # ============================
+    # FUNÇÃO DE COMPARAÇÃO
+    # ============================
+    function Compare-And-Update($remoteUrl, $localPath) {
+        try {
+            $remoteContent = (Invoke-WebRequest $remoteUrl -UseBasicParsing -ErrorAction Stop).Content
+        }
+        catch {
+            Write-Host "Erro ao baixar: $remoteUrl" -ForegroundColor Red
+            return
+        }
 
-    if (-not $remote.Content) {
-        Write-Host "Erro: Conteudo remoto vazio." -ForegroundColor Red
-        Write-Log "Conteudo remoto vazio ao atualizar NeoVcore"
-        return
-    }
-
-    # Caminhos
-    $localPath  = "$installPath\NeoVcore.ps1"
-    $backupPath = "$installPath\NeoVcore_backup.ps1"
-
-    Write-Host "Criando backup da versao atual..." -ForegroundColor White
-
-    try {
+        $localContent = ""
         if (Test-Path $localPath) {
-            Copy-Item $localPath $backupPath -Force
-            Write-Log "Backup do NeoVcore criado"
+            $localContent = Get-Content $localPath -Raw
+        }
+
+        if ($remoteContent -ne $localContent) {
+            Write-Host "Atualizando: $localPath" -ForegroundColor Cyan
+            $remoteContent | Out-File $localPath -Encoding UTF8
         }
         else {
-            Write-Log "Nenhum arquivo local encontrado para backup (instalacao nova)"
+            Write-Host "Sem mudanças: $localPath" -ForegroundColor DarkGray
         }
     }
-    catch {
-        Write-Host "Erro ao criar backup." -ForegroundColor Red
-        Write-Log "Falha ao criar backup"
-        return
+
+    # ============================
+    # ATUALIZAR ARQUIVO PRINCIPAL
+    # ============================
+
+    $mainLocal = "$installPath\NeoVcore.ps1"
+    $mainRemote = "https://raw.githubusercontent.com/brunokupper/neovcore/main/NeoVcore.ps1"
+
+    Write-Host "Criando backup da versao atual..." -ForegroundColor White
+    if (Test-Path $mainLocal) {
+        Copy-Item $mainLocal "$installPath\NeoVcore_backup.ps1" -Force
     }
 
-    Write-Host "Aplicando nova versao..." -ForegroundColor White
+    Compare-And-Update $mainRemote $mainLocal
 
-    try {
-        $remote.Content | Out-File $localPath -Encoding UTF8
-        Write-Log "NeoVcore atualizado com sucesso"
-    }
-    catch {
-        Write-Host "Erro ao aplicar atualizacao." -ForegroundColor Red
-        Write-Log "Falha ao aplicar atualizacao"
-        return
+    # ============================
+    # ATUALIZAR PASTA DATA
+    # ============================
+
+    $dataFiles = @("features.json","logs.txt","presets.json","Settings.json","version.txt")
+
+    foreach ($file in $dataFiles) {
+        Compare-And-Update `
+            "https://raw.githubusercontent.com/brunokupper/neovcore/main/data/$file" `
+            "$installPath\data\$file"
     }
 
-    # Atualizar version.txt
-    try {
-        $remoteVersion | Out-File $localVersionFile -Encoding UTF8
+    # ============================
+    # ATUALIZAR MÓDULOS
+    # ============================
+
+    $modules = Get-ChildItem "$installPath\modules" | Select-Object -ExpandProperty Name
+
+    foreach ($m in $modules) {
+        Compare-And-Update `
+            "https://raw.githubusercontent.com/brunokupper/neovcore/main/modules/$m" `
+            "$installPath\modules\$m"
     }
-    catch {
-        Write-Host "Aviso: Nao foi possivel atualizar version.txt" -ForegroundColor Yellow
+
+    # ============================
+    # ATUALIZAR VIVETOOL
+    # ============================
+
+    $vtFiles = @("ViVeTool.exe","Albacore.ViVe.dll","FeatureDictionary.pfs","Newtonsoft.Json.dll")
+
+    foreach ($v in $vtFiles) {
+        Compare-And-Update `
+            "https://raw.githubusercontent.com/brunokupper/neovcore/main/vivetool/$v" `
+            "$installPath\vivetool\$v"
     }
+
+    # ============================
+    # FINALIZAÇÃO
+    # ============================
 
     Write-Host ""
     Write-Host "NeoVcore atualizado com sucesso!" -ForegroundColor Green
@@ -124,4 +139,3 @@ function Update-NeoVcore {
     Read-Host "Pressione ENTER para abrir o NeoVcore"
     & "$installPath\NeoVcore.ps1"
 }
-
