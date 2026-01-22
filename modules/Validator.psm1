@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 function Validate-FeaturesJson {
 
     Clear-Host
@@ -135,3 +138,4 @@ function Validate-FeaturesJson {
 
     Read-Host "ENTER para continuar"
 }
+
