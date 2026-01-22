@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MÓDULO: AdvancedTools.psm1
@@ -145,4 +148,5 @@ function Advanced-Utilities {
             Read-Host "Pressione ENTER para continuar"
         }
     }
+
 }
