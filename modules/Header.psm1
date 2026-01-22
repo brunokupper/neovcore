@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MÓDULO: Header.psm1
@@ -41,3 +44,4 @@ function Show-NeoVcoreHeader {
     Write-Host $line -ForegroundColor $colorLine
     Write-Host ""
 }
+
