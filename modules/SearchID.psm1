@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#  
     ============================================================
     MODULO: SearchID.psm1
@@ -137,3 +140,4 @@ function Show-SearchByIdMenu {
         }
     }
 }
+
