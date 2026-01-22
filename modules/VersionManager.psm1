@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - SISTEMA DE VERSAO
 # ============================================================
@@ -82,3 +85,4 @@ function Set-NeoVcoreVersion($version) {
         Write-Log "Falha ao salvar nova versao no version.txt"
     }
 }
+
