@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 # ============================================================
 # NEO VCORE V6 - MENU AVANCADO (F10)
 # ============================================================
@@ -56,4 +59,5 @@ function Show-DeveloperMenu {
             }
         }
     }
+
 }
