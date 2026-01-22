@@ -1,3 +1,6 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+
 <#
     ============================================================
     MÓDULO: Submenus.psm1
@@ -107,3 +110,4 @@ function Show-Submenu {
         Read-Host
     }
 }
+
