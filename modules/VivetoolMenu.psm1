@@ -1,5 +1,7 @@
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+$PSDefaultParameterValues['Set-Content:Encoding'] = 'utf8'
+$PSDefaultParameterValues['Add-Content:Encoding'] = 'utf8'
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ============================================================
 # NEO VCORE V6 - VIVETOOL MENU UNIFICADO (VISUAL PADRONIZADO)
@@ -219,3 +221,4 @@ function Show-VivetoolResourcesMenu {
 }
 
 Export-ModuleMember -Function Show-VivetoolResourcesMenu
+
