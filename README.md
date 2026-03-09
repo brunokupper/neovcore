@@ -33,8 +33,11 @@ Ele oferece uma interface moderna, menus organizados, ativação individual ou p
 
 
 Execute:
-
-
+1º comando
+```powershell
+Set-ExecutionPolicy RemoteSigned
+```
+2º Comando
 ```powershell
 irm https://raw.githubusercontent.com/brunokupper/neovcore/main/install.ps1 | iex
 ```
